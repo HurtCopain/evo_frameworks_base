@@ -221,8 +221,10 @@ public class UdfpsController implements DozeReceiver, Dumpable {
     private int mSmartPixelsOnPowerSave= 0;
     private final BatteryController mBatteryController;
 
+
     private boolean mFrameworkDimming;
     private int[][] mBrightnessAlphaArray;
+    private int mFrameworkDimmingDelay;
 
     @VisibleForTesting
     public static final VibrationAttributes UDFPS_VIBRATION_ATTRIBUTES =
@@ -855,6 +857,11 @@ public class UdfpsController implements DozeReceiver, Dumpable {
         udfpsHapticsSimulator.setUdfpsController(this);
         udfpsShell.setUdfpsOverlayController(mUdfpsOverlayController);
 
+        mFrameworkDimming = mContext.getResources().getBoolean(R.bool.config_udfpsFrameworkDimming);
+        mFrameworkDimmingDelay = mContext.getResources().getInteger(R.integer.config_udfpsDimmingDisableDelay);
+        parseBrightnessAlphaArray();
+        
+        
         if (EvolutionUtils.isPackageInstalled(mContext, "com.evolution.udfps.resources")) {
             mUdfpsAnimation = new UdfpsAnimation(mContext, mWindowManager, mSensorProps);
         }
@@ -1146,6 +1153,17 @@ public class UdfpsController implements DozeReceiver, Dumpable {
         if (mCancelAodFingerUpAction != null) {
             mCancelAodFingerUpAction.run();
             mCancelAodFingerUpAction = null;
+        }   
+        // Add a delay to ensure that the dim amount is updated after the display
+        // has had chance to switch out of HBM mode.
+        // The delay, in ms is stored in config_udfpsDimmingDisableDelay.
+        // If the delay is 0, the dim amount will be updated immediately.
+        if (mFrameworkDimming && mFrameworkDimmingDelay > 0) {
+            mFgExecutor.executeDelayed(() -> {
+                updateViewDimAmount(false);
+            }, mFrameworkDimmingDelay);
+        } else {
+            updateViewDimAmount(false);
         }
     }
 
@@ -1170,9 +1188,10 @@ public class UdfpsController implements DozeReceiver, Dumpable {
     }
 
     private void updateViewDimAmount(boolean pressed) {
-        if (mFrameworkDimming) {
+        if (mOverlay != null && mFrameworkDimming) {
             if (pressed) {
-                int curBrightness = getBrightness();
+                int curBrightness = Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS, Integer.MAX_VALUE, UserHandle.USER_CURRENT);
                 int i, dimAmount;
                 for (i = 0; i < mBrightnessAlphaArray.length; i++) {
                     if (mBrightnessAlphaArray[i][0] >= curBrightness) break;
@@ -1186,6 +1205,7 @@ public class UdfpsController implements DozeReceiver, Dumpable {
                             mBrightnessAlphaArray[i][0], mBrightnessAlphaArray[i-1][0],
                             mBrightnessAlphaArray[i][1], mBrightnessAlphaArray[i-1][1]);
                 }
+                Log.w(TAG, "Dekefake curBrightness: " + curBrightness + "; dimAmount: "+dimAmount);
                 // Call the function in UdfpsOverlayController with dimAmount
                 mOverlay.updateDimAmount(dimAmount / 255.0f);
             } else {
@@ -1196,7 +1216,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
     }
 
     private void parseBrightnessAlphaArray() {
-        mFrameworkDimming = mContext.getResources().getBoolean(R.bool.config_udfpsFrameworkDimming);
         if (mFrameworkDimming) {
             String[] array = mContext.getResources().getStringArray(
                     R.array.config_udfpsDimmingBrightnessAlphaArray);
@@ -1264,6 +1283,9 @@ public class UdfpsController implements DozeReceiver, Dumpable {
                     + " current: " + mOverlay.getRequestId());
             return;
         }
+        
+        updateViewDimAmount(true);
+
         if (isOptical()) {
             mLatencyTracker.onActionStart(LatencyTracker.ACTION_UDFPS_ILLUMINATE);
         }
@@ -1388,7 +1410,7 @@ public class UdfpsController implements DozeReceiver, Dumpable {
         }
         cancelAodSendFingerUpAction();
 
-        // Add a delay to ensure that the dim amount is updated after the display
+       // Add a delay to ensure that the dim amount is updated after the display
         // has had chance to switch out of HBM mode.
         // The delay, in ms is stored in config_udfpsDimmingDisableDelay.
         // If the delay is 0, the dim amount will be updated immediately.

@@ -592,6 +592,65 @@
         280
     </integer>
 
+    <!-- Flag to enable framework dimming for udfps -->
+    <bool name="config_udfpsFrameworkDimming">true</bool>
+
+    <!-- Array of brightness-alpha lut for framework dimming -->
+    <string-array name="config_udfpsDimmingBrightnessAlphaArray" translatable="false">
+          <item>0,250</item>
+          <item>1,232</item>
+          <item>2,221</item>
+          <item>3,217</item>
+          <item>4,211</item>
+          <item>5,205</item>
+          <item>6,201</item>
+          <item>7,196</item>
+          <item>8,191</item>
+          <item>10,186</item>
+          <item>11,185</item>
+          <item>12,183</item>
+          <item>13,180</item>
+          <item>14,179</item>
+          <item>15,177</item>
+          <item>17,174</item>
+          <item>20,166</item>
+          <item>23,160</item>
+          <item>24,158</item>
+          <item>27,151</item>
+          <item>29,148</item>
+          <item>31,145</item>
+          <item>35,140</item>
+          <item>39,131</item>
+          <item>41,129</item>
+          <item>45,124</item>
+          <item>47,120</item>
+          <item>51,113</item>
+          <item>56,107</item>
+          <item>60,100</item>
+          <item>67,91</item>
+          <item>71,88</item>
+          <item>80,79</item>
+          <item>90,71</item>
+          <item>96,69</item>
+          <item>101,64</item>
+          <item>107,61</item>
+          <item>121,52</item>
+          <item>136,45</item>
+          <item>142,41</item>
+          <item>149,38</item>
+          <item>176,22</item>
+          <item>190,19</item>
+          <item>255,0</item>
+    </string-array>
+
+    <!-- The amount of delay to add when disabling the dimming.
+         This is used to prevent flickers due to the dimming being disabled
+         before the screen has had chance to switch out of HBM mode -->
+    <integer name="config_udfpsDimmingDisableDelay">1</integer>
+
+    <integer name="config_udfpsDimmingBrightnessMin">0</integer>
+    <integer name="config_udfpsDimmingBrightnessMax">0</integer>
+
     <!-- The time (in ms) needed to trigger the lock icon view's long-press affordance -->
     <integer name="config_lockIconLongPress" translatable="false">200</integer>
 
