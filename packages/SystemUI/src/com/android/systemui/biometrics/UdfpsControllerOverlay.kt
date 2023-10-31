@@ -143,11 +143,6 @@ class UdfpsControllerOverlay @JvmOverloads constructor(
         return newDimAmount
     }
 
-    fun updateDimAmount(newDimAmount: Float) {
-        coreLayoutParams.dimAmount = newDimAmount
-        windowManager.updateViewLayout(overlayView, coreLayoutParams)
-    }
-
     /** A helper if the [requestReason] was due to enrollment. */
     val enrollHelper: UdfpsEnrollHelper? =
         if (requestReason.isEnrollmentReason() && !shouldRemoveEnrollmentUi()) {
