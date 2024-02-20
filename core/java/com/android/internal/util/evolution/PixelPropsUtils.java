@@ -188,6 +188,7 @@ public class PixelPropsUtils {
 
     private static volatile boolean sIsGms, sIsFinsky, sIsSetupWizard, sIsGoogle, sIsSamsung;
     private static volatile String sProcessName;
+    private static volatile boolean sIsExcluded = false;
 
     static {
         propsToKeep = new HashMap<>();
@@ -444,6 +445,7 @@ public class PixelPropsUtils {
             }
             // Allow process spoofing for GoogleCamera packages
             if (isGoogleCameraPackage(packageName) && (propsToChange == null || propsToChange.isEmpty())) {
+                sIsExcluded = true; 
                 return;
             }
         } else if (SystemProperties.getBoolean(SPOOF_MUSIC_APPS, false)
@@ -556,7 +558,7 @@ public class PixelPropsUtils {
             Process.killProcess(Process.myPid());
             return;
         }
-        if (isCallerSafetyNet() || sIsFinsky) {
+        if ((isCallerSafetyNet() || sIsFinsky) && !sIsExcluded) {
             dlog("Blocked key attestation sIsGms=" + sIsGms + " sIsFinsky=" + sIsFinsky);
             throw new UnsupportedOperationException();
         }
